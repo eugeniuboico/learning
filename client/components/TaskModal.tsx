@@ -200,7 +200,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   // Function to mark task as viewed by student
   const markTaskAsViewed = async () => {
     try {
-      await fetch(`http://localhost:3001/tasks/${task.id}/mark-viewed`, {
+      await fetch(apiUrl(`/tasks/${task.id}/mark-viewed`), {
         method: 'POST',
           credentials: 'include'
         });
@@ -211,7 +211,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const fetchSubmissions = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/tasks/${task.id}/submissions`, {
+      const res = await fetch(apiUrl(`/tasks/${task.id}/submissions`), {
         credentials: 'include'
       });
       if (res.ok) {
@@ -225,7 +225,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/tasks/${task.id}`, {
+      const res = await fetch(apiUrl(`/tasks/${task.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -322,7 +322,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleDeleteConfirm = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/tasks/${task.id}`, {
+      const res = await fetch(apiUrl(`/tasks/${task.id}`), {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -359,7 +359,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         formData.append('file', file);
         formData.append('userId', currentUserId.toString());
 
-        const res = await fetch(`http://localhost:3001/tasks/${task.id}/submit`, {
+        const res = await fetch(apiUrl(`/tasks/${task.id}/submit`), {
           method: 'POST',
           credentials: 'include',
           body: formData
@@ -383,7 +383,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   };
 
   const downloadFile = (filename: string) => {
-    window.open(`http://localhost:3001/submissions/${filename}`, '_blank');
+    window.open(apiUrl(`/submissions/${filename}`), '_blank');
   };
 
   const formatFileSize = (bytes: number) => {
@@ -403,7 +403,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleApproveSubmission = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:3001/submissions/${id}/approve`, {
+      const res = await fetch(apiUrl(`/submissions/${id}/approve`), {
         method: 'POST',
         credentials: 'include'
       });
@@ -424,7 +424,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleApproveAll = async (studentId: number) => {
     try {
-      const res = await fetch(`http://localhost:3001/tasks/${task.id}/approve-all`, {
+      const res = await fetch(apiUrl(`/tasks/${task.id}/approve-all`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -447,7 +447,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleDeleteSubmission = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:3001/submissions/${id}`, {
+      const res = await fetch(apiUrl(`/submissions/${id}`), {
         method: 'DELETE',
         credentials: 'include'
       });

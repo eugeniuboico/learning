@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Chat, Message, ChatMember } from '../types';
 import { useSocket } from '../contexts/SocketContext';
 import { ConfirmDialog } from './ConfirmDialog';
-import { apiUrl } from '../config';
+import { apiUrl, API_URL } from '../config';
 
 interface ChatWindowProps {
   chat: Chat;
@@ -63,7 +63,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
   // Fetch messages
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}/messages`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}/messages`), {
         credentials: 'include'
       });
       if (response.ok) {
@@ -79,7 +79,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
   // Fetch members
   const fetchMembers = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}/members`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}/members`), {
         credentials: 'include'
       });
       if (response.ok) {
@@ -224,7 +224,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
     if (!editedMessageContent.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}/messages/${messageId}`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}/messages/${messageId}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -244,7 +244,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
 
   const handleDeleteMessage = async (messageId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}/messages/${messageId}`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}/messages/${messageId}`), {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -311,7 +311,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
         formData.append('images', image);
       });
 
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}/messages`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}/messages`), {
         method: 'POST',
         credentials: 'include',
         body: formData
@@ -388,7 +388,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
 
   const handleAddMember = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}/members`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}/members`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -406,7 +406,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
 
   const handleRemoveMember = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}/members/${userId}`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}/members/${userId}`), {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -424,7 +424,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
 
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -444,7 +444,7 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
 
   const handleDeleteChat = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/chats/${chat.id}`, {
+      const response = await fetch(apiUrl(`/chats/${chat.id}`), {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -680,10 +680,10 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
                                       {imageList.map((imagePath, idx) => (
                                         <img 
                                           key={idx}
-                                          src={`http://localhost:3001${imagePath}`}
+                                          src={`${API_URL}${imagePath}`}
                                           alt={`Image ${idx + 1}`}
                                           className="max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                          onClick={() => setPreviewImage(`http://localhost:3001${imagePath}`)}
+                                          onClick={() => setPreviewImage(`${API_URL}${imagePath}`)}
                                         />
                                       ))}
                                     </div>

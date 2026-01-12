@@ -104,7 +104,7 @@ const App: React.FC = () => {
 
   const handleUnlockPath = async (pathId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/paths/${pathId}/unlock`, {
+      const response = await fetch(apiUrl(`/paths/${pathId}/unlock`), {
         method: 'POST',
         credentials: 'include'
       });

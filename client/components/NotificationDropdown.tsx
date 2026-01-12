@@ -100,7 +100,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ curr
   // Mark as read
   const markAsRead = async (notificationId: number) => {
     try {
-      await fetch(`http://localhost:3001/notifications/${notificationId}/read`, {
+      await fetch(apiUrl(`/notifications/${notificationId}/read`), {
         method: 'PUT',
         credentials: 'include'
       });
@@ -126,7 +126,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ curr
   // Delete notification
   const deleteNotification = async (notificationId: number) => {
     try {
-      await fetch(`http://localhost:3001/notifications/${notificationId}`, {
+      await fetch(apiUrl(`/notifications/${notificationId}`), {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -159,7 +159,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ curr
   const handleAction = async (notificationId: number, action: 'approve' | 'reject', userId: number) => {
     setLoadingNotificationId(notificationId);
     try {
-      const response = await fetch(`http://localhost:3001/users/${userId}/${action}`, {
+      const response = await fetch(apiUrl(`/users/${userId}/${action}`), {
         method: 'POST',
         credentials: 'include'
       });

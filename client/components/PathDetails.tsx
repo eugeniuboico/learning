@@ -56,7 +56,7 @@ export const PathDetails: React.FC<PathDetailsProps> = ({ path, onBack, currentU
   // Fetch Lessons
   const fetchLessons = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/paths/${path.id}/details?t=${Date.now()}`, { credentials: 'include' });
+      const res = await fetch(apiUrl(`/paths/${path.id}/details?t=${Date.now()}`), { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         // Ensure tasks are sorted by order
@@ -197,7 +197,7 @@ export const PathDetails: React.FC<PathDetailsProps> = ({ path, onBack, currentU
   const handleEditLesson = async (title: string, description: string) => {
     if (!editLessonModal.lesson) return;
 
-    await fetch(`http://localhost:3001/lessons/${editLessonModal.lesson.id}`, {
+    await fetch(apiUrl(`/lessons/${editLessonModal.lesson.id}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, description })
@@ -210,7 +210,7 @@ export const PathDetails: React.FC<PathDetailsProps> = ({ path, onBack, currentU
   const handleDeleteLesson = async () => {
     if (!deleteConfirmModal.lessonId) return;
 
-    await fetch(`http://localhost:3001/lessons/${deleteConfirmModal.lessonId}`, {
+    await fetch(apiUrl(`/lessons/${deleteConfirmModal.lessonId}`), {
       method: 'DELETE'
     });
     setDeleteConfirmModal({ open: false, lessonId: null });

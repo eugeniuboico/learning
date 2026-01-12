@@ -46,7 +46,7 @@ export const EditPathModal: React.FC<EditPathModalProps> = ({ isOpen, path, onCl
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`http://localhost:3001/paths/${path.id}`, {
+      const response = await fetch(apiUrl(`/paths/${path.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -87,7 +87,7 @@ export const EditPathModal: React.FC<EditPathModalProps> = ({ isOpen, path, onCl
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`http://localhost:3001/paths/${path?.id}`, {
+      const response = await fetch(apiUrl(`/paths/${path?.id}`), {
         method: 'DELETE',
         credentials: 'include'
       });

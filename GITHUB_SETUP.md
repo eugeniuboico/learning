@@ -19,7 +19,7 @@ DupÄƒ ce ai creat repository-ul pe GitHub, vei vedea instrucÈ›iuni. Folose�
 git remote add origin https://github.com/USERNAME/learning-antigravity.git
 
 # Sau dacÄƒ foloseÈ™ti SSH:
-git remote add origin git@github.com:USERNAME/learning-antigravity.git
+git remote add origin https://github.com/eugeniuboico/learning.git
 
 # VerificÄƒ cÄƒ remote-ul a fost adÄƒugat
 git remote -v
