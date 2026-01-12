@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Chat, User } from '../types';
-import { apiUrl } from '../config';
+import { apiUrl, getFileUrl } from '../config';
 
 interface CreateChatModalProps {
   onClose: () => void;
@@ -151,8 +151,8 @@ export default function CreateChatModal({ onClose, onChatCreated }: CreateChatMo
                   >
                     <div className="flex items-center space-x-3">
                       <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getGradientForName(user.name)} flex items-center justify-center font-bold text-white text-sm shadow-md overflow-hidden`}>
-                        {user.avatar_url ? (
-                          <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                        {getFileUrl(user.avatar_url) ? (
+                          <img src={getFileUrl(user.avatar_url)!} alt={user.name} className="w-full h-full object-cover" />
                         ) : (
                           getInitial(user.name)
                         )}

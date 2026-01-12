@@ -265,7 +265,7 @@ const sendNotificationEmail = async (email, subject, message) => {
           <h2 style="color: #333;">🎓 Learning Platform</h2>
           <p>${message}</p>
           <p style="margin-top: 20px;">
-            <a href="http://localhost:5173" style="background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            <a href="${FRONTEND_URL}" style="background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Access Platform
             </a>
           </p>
@@ -1607,8 +1607,8 @@ app.post('/upload-image', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'No image uploaded' });
   }
 
-  // Return the URL to access the uploaded image
-  const imageUrl = `http://localhost:3001/uploads/${req.file.filename}`;
+  // Return the relative path to access the uploaded image
+  const imageUrl = `/uploads/${req.file.filename}`;
   res.json({ url: imageUrl });
 });
 

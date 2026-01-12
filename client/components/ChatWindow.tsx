@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Chat, Message, ChatMember } from '../types';
 import { useSocket } from '../contexts/SocketContext';
 import { ConfirmDialog } from './ConfirmDialog';
-import { apiUrl, API_URL } from '../config';
+import { apiUrl, API_URL, getFileUrl } from '../config';
 
 interface ChatWindowProps {
   chat: Chat;
@@ -583,8 +583,8 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
                         className="flex items-center space-x-2 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded cursor-pointer"
                       >
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/50 flex items-center justify-center text-xs font-bold text-primary-dark">
-                          {user.avatar_url ? (
-                            <img src={user.avatar_url} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                          {getFileUrl(user.avatar_url) ? (
+                            <img src={getFileUrl(user.avatar_url)!} alt={user.name} className="w-full h-full rounded-full object-cover" />
                           ) : (
                             getInitial(user.name)
                           )}
@@ -601,8 +601,8 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
                   <div key={member.id} className="flex items-center justify-between p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/50 flex items-center justify-center text-xs font-bold text-primary-dark">
-                        {member.avatar_url ? (
-                          <img src={member.avatar_url} alt={member.name} className="w-full h-full rounded-full object-cover" />
+                        {getFileUrl(member.avatar_url) ? (
+                          <img src={getFileUrl(member.avatar_url)!} alt={member.name} className="w-full h-full rounded-full object-cover" />
                         ) : (
                           getInitial(member.name)
                         )}
@@ -761,8 +761,8 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
                         title={user.userName}
                       >
                         <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-white dark:border-gray-800 shadow-sm bg-gradient-to-br from-primary/30 to-primary/50 flex items-center justify-center text-[0.6rem] font-bold text-primary-dark">
-                          {member?.avatar_url ? (
-                            <img src={member.avatar_url} alt={user.userName} className="w-full h-full object-cover" />
+                          {getFileUrl(member?.avatar_url) ? (
+                            <img src={getFileUrl(member.avatar_url)!} alt={user.userName} className="w-full h-full object-cover" />
                           ) : (
                             getInitial(user.userName)
                           )}

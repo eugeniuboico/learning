@@ -3,7 +3,7 @@ import { useDialog } from '../hooks/useDialog';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 import { useSocket } from '../contexts/SocketContext';
 import { AlertDialog } from './AlertDialog';
-import { apiUrl } from '../config';
+import { apiUrl, getFileUrl } from '../config';
 import { NotificationDropdown } from './NotificationDropdown';
 
 interface NavbarProps {
@@ -200,8 +200,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRegister, onOpenLogin, cur
                           title={user.name}
                         >
                           <div class="w-7 h-7 rounded-full overflow-hidden border-2 border-green-500 shadow-sm transition-transform hover:scale-125 cursor-pointer bg-white">
-                            {user.avatar_url ? (
-                              <img src={user.avatar_url} alt={user.name} class="w-full h-full object-cover" />
+                            {getFileUrl(user.avatar_url) ? (
+                              <img src={getFileUrl(user.avatar_url)!} alt={user.name} class="w-full h-full object-cover" />
                             ) : (
                               <div class={`w-full h-full bg-gradient-to-br ${getGradientForName(user.name)} flex items-center justify-center font-bold text-white text-[0.65rem]`}>
                                 {initial}
@@ -235,8 +235,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRegister, onOpenLogin, cur
                 >
                   {/* Avatar */}
                   <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-300 to-orange-400 flex items-center justify-center font-bold text-white text-base shadow-md overflow-hidden">
-                    {currentUser.avatar_url ? (
-                      <img src={currentUser.avatar_url} alt="avatar" class="w-full h-full object-cover" />
+                    {getFileUrl(currentUser.avatar_url) ? (
+                      <img src={getFileUrl(currentUser.avatar_url)!} alt="avatar" class="w-full h-full object-cover" />
                     ) : (
                       currentUser.name.charAt(0)
                     )}
@@ -316,8 +316,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRegister, onOpenLogin, cur
                   onClick={() => avatarInputRef.current?.click()}
                   title="Change photo"
                 >
-                  {(avatarPreviewUrl || currentUser.avatar_url) ? (
-                    <img src={avatarPreviewUrl || currentUser.avatar_url} alt="avatar" class="w-full h-full object-cover" />
+                  {(avatarPreviewUrl || getFileUrl(currentUser.avatar_url)) ? (
+                    <img src={avatarPreviewUrl || getFileUrl(currentUser.avatar_url)!} alt="avatar" class="w-full h-full object-cover" />
                   ) : (
                     <span class="text-white font-extrabold text-2xl">{currentUser.name?.charAt(0)}</span>
                   )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { User } from '../types';
+import { getFileUrl } from '../config';
 
 interface LeaderboardItemProps {
   user: User;
@@ -31,8 +32,8 @@ export const LeaderboardItem: React.FC<LeaderboardItemProps> = ({ user }) => {
     return (
       <div className="relative bg-white dark:bg-gray-800 rounded-full border-2 border-primary p-2 pl-14 pr-6 flex items-center justify-between shadow-sm hover:shadow-md transition-all cursor-pointer group mb-3">
         <div className="absolute left-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full border-4 border-yellow-400 shadow-md z-10 overflow-hidden">
-          {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+          {getFileUrl(user.avatar_url) ? (
+            <img src={getFileUrl(user.avatar_url)!} alt={user.name} className="w-full h-full object-cover" />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${getGradientForName(user.name)} flex items-center justify-center font-bold text-white text-base`}>
               {initial}
@@ -55,8 +56,8 @@ export const LeaderboardItem: React.FC<LeaderboardItemProps> = ({ user }) => {
     return (
       <div className="relative bg-white dark:bg-gray-800 rounded-full border-2 border-yellow-400 p-2 pl-14 pr-6 flex items-center justify-between shadow-sm hover:shadow-md transition-all cursor-pointer group mb-3">
         <div className="absolute left-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full border-4 border-gray-300 shadow-md z-10 overflow-hidden">
-          {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+          {getFileUrl(user.avatar_url) ? (
+            <img src={getFileUrl(user.avatar_url)!} alt={user.name} className="w-full h-full object-cover" />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${getGradientForName(user.name)} flex items-center justify-center font-bold text-white text-base`}>
               {initial}
@@ -79,8 +80,8 @@ export const LeaderboardItem: React.FC<LeaderboardItemProps> = ({ user }) => {
     return (
       <div className="relative bg-white dark:bg-gray-800 rounded-full border-2 border-orange-400 p-2 pl-14 pr-6 flex items-center justify-between shadow-sm hover:shadow-md transition-all cursor-pointer group mb-3">
         <div className="absolute left-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full border-4 border-orange-400 shadow-md z-10 overflow-hidden">
-          {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+          {getFileUrl(user.avatar_url) ? (
+            <img src={getFileUrl(user.avatar_url)!} alt={user.name} className="w-full h-full object-cover" />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${getGradientForName(user.name)} flex items-center justify-center font-bold text-white text-base`}>
               {initial}
@@ -102,8 +103,8 @@ export const LeaderboardItem: React.FC<LeaderboardItemProps> = ({ user }) => {
   return (
     <div className="relative bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-600 p-2 pl-14 pr-6 flex items-center justify-between shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors mb-3">
       <div className="absolute left-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full shadow-md z-10 overflow-hidden">
-        {user.avatar_url ? (
-          <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+        {getFileUrl(user.avatar_url) ? (
+          <img src={getFileUrl(user.avatar_url)!} alt={user.name} className="w-full h-full object-cover" />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${getGradientForName(user.name)} flex items-center justify-center font-bold text-white text-base`}>
             {initial}
