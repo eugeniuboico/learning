@@ -765,6 +765,61 @@ app.delete('/admin/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Add stars to user (Admin only)
+app.post('/admin/users/:id/add-stars', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stars } = req.body;
+
+    // Check if user is admin
+    const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+    if (currentUser.length === 0 || currentUser[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Validate stars amount
+    if (!stars || isNaN(stars) || parseInt(stars) <= 0) {
+      return res.status(400).json({ error: 'Invalid stars amount' });
+    }
+
+    const starsToAdd = parseInt(stars);
+
+    // Check if target user exists
+    const [targetUser] = await db.query('SELECT id, name, email, stars FROM users WHERE id = ?', [id]);
+    if (targetUser.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Add stars to user
+    await db.query('UPDATE users SET stars = stars + ? WHERE id = ?', [starsToAdd, id]);
+
+    // Get updated user
+    const [updatedUser] = await db.query('SELECT id, name, email, role, stars, avatar_url FROM users WHERE id = ?', [id]);
+
+    // Create notification for user
+    await createNotification(
+      parseInt(id),
+      'stars_received',
+      `⭐ +${starsToAdd} Stars Received!`,
+      `You've received ${starsToAdd} star${starsToAdd > 1 ? 's' : ''} from the administrator! Keep up the great work!`,
+      null,
+      JSON.stringify({ starsAdded: starsToAdd, newTotal: updatedUser[0].stars })
+    );
+
+    // Emit Socket.IO event to update leaderboard
+    io.emit('leaderboard:update');
+
+    res.json({ 
+      message: 'Stars added successfully', 
+      user: updatedUser[0],
+      starsAdded: starsToAdd 
+    });
+  } catch (error) {
+    console.error('[Admin Add Stars] Error:', error);
+    res.status(500).json({ error: 'Failed to add stars' });
+  }
+});
+
 // Get notifications for current user
 app.get('/notifications', authenticateToken, async (req, res) => {
   try {

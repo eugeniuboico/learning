@@ -28,6 +28,8 @@ export default function UsersManagementModal({ isOpen, onClose, currentUserId }:
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; userId?: number; userName?: string }>({ isOpen: false });
+  const [addStarsDialog, setAddStarsDialog] = useState<{ isOpen: boolean; userId?: number; userName?: string }>({ isOpen: false });
+  const [starsAmount, setStarsAmount] = useState<string>('10');
 
   useEffect(() => {
     if (isOpen) {
@@ -122,6 +124,36 @@ export default function UsersManagementModal({ isOpen, onClose, currentUserId }:
     }
   };
 
+  const handleAddStars = async (userId: number) => {
+    const stars = parseInt(starsAmount);
+    
+    if (isNaN(stars) || stars <= 0) {
+      alert('Please enter a valid number of stars (positive number)');
+      return;
+    }
+
+    try {
+      const response = await fetch(apiUrl(`/admin/users/${userId}/add-stars`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ stars })
+      });
+
+      if (response.ok) {
+        await fetchUsers();
+        setAddStarsDialog({ isOpen: false });
+        setStarsAmount('10'); // Reset to default
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to add stars');
+      }
+    } catch (error) {
+      console.error('Failed to add stars:', error);
+      alert('Failed to add stars');
+    }
+  };
+
   if (!isOpen) return null;
 
   return ReactDOM.createPortal(
@@ -192,6 +224,18 @@ export default function UsersManagementModal({ isOpen, onClose, currentUserId }:
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right space-x-2">
+                          <button
+                            onClick={() => setAddStarsDialog({ isOpen: true, userId: user.id, userName: user.name })}
+                            disabled={user.id === currentUserId}
+                            className={`${
+                              user.id === currentUserId
+                                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                                : 'text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300'
+                            } transition-colors`}
+                            title={user.id === currentUserId ? 'Cannot give stars to yourself' : 'Add stars'}
+                          >
+                            <span className="material-icons text-xl">star</span>
+                          </button>
                           <button
                             onClick={() => handleEdit(user)}
                             className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
@@ -313,6 +357,53 @@ export default function UsersManagementModal({ isOpen, onClose, currentUserId }:
               <button
                 onClick={() => setEditingUser(null)}
                 className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Stars Dialog */}
+      {addStarsDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/70 z-[170] flex items-center justify-center p-4" onClick={() => setAddStarsDialog({ isOpen: false })}>
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+              ⭐ Add Stars to {addStarsDialog.userName}
+            </h3>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Number of stars to add:
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={starsAmount}
+                onChange={(e) => setStarsAmount(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-center text-2xl font-bold"
+                autoFocus
+              />
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
+                Are you sure you want to add <strong className="text-yellow-600">{starsAmount}</strong> star{parseInt(starsAmount) !== 1 ? 's' : ''} to {addStarsDialog.userName}?
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => addStarsDialog.userId && handleAddStars(addStarsDialog.userId)}
+                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-icons">star</span>
+                <span>Add Stars</span>
+              </button>
+              <button
+                onClick={() => setAddStarsDialog({ isOpen: false })}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-semibold py-3 px-4 rounded-lg transition-colors"
               >
                 Cancel
               </button>
