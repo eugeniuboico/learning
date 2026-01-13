@@ -123,8 +123,10 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
     if (!socket) return;
 
     // Listen for new messages
-    const handleNewMessage = (data: { chatId: number; message: Message }) => {
-      if (data.chatId === chat.id) {
+    const handleNewMessage = (data: { chatId: number | string; message: Message }) => {
+      console.log('[ChatWindow] Received new_message:', data, 'current chat.id:', chat.id);
+      // Convert both to numbers for comparison (server might send string or number)
+      if (Number(data.chatId) === Number(chat.id)) {
         // Check if message already exists (avoid duplicates)
         setMessages(prev => {
           const exists = prev.some(m => m.id === data.message.id);
@@ -132,25 +134,27 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
           return [...prev, data.message];
         });
         setTimeout(scrollToBottom, 100);
+      } else {
+        console.log('[ChatWindow] Message ignored - wrong chat. Expected:', chat.id, 'Got:', data.chatId);
       }
     };
 
     // Listen for member changes
-    const handleMemberAdded = (data: { chatId: number; user: ChatMember }) => {
-      if (data.chatId === chat.id) {
+    const handleMemberAdded = (data: { chatId: number | string; user: ChatMember }) => {
+      if (Number(data.chatId) === Number(chat.id)) {
         fetchMembers();
       }
     };
 
-    const handleMemberRemoved = (data: { chatId: number; userId: number }) => {
-      if (data.chatId === chat.id) {
+    const handleMemberRemoved = (data: { chatId: number | string; userId: number }) => {
+      if (Number(data.chatId) === Number(chat.id)) {
         fetchMembers();
       }
     };
 
     // Listen for typing indicators
-    const handleUserTyping = (data: { chatId: number; userId: number; userName: string }) => {
-      if (data.chatId === chat.id && data.userId !== currentUserId) {
+    const handleUserTyping = (data: { chatId: number | string; userId: number; userName: string }) => {
+      if (Number(data.chatId) === Number(chat.id) && data.userId !== currentUserId) {
         setTypingUsers(prev => {
           const exists = prev.some(u => u.userId === data.userId);
           if (exists) return prev;
@@ -159,22 +163,22 @@ export default function ChatWindow({ chat, currentUserId, onBack, onClose }: Cha
       }
     };
 
-    const handleUserStoppedTyping = (data: { chatId: number; userId: number }) => {
-      if (data.chatId === chat.id) {
+    const handleUserStoppedTyping = (data: { chatId: number | string; userId: number }) => {
+      if (Number(data.chatId) === Number(chat.id)) {
         setTypingUsers(prev => prev.filter(u => u.userId !== data.userId));
       }
     };
 
     // Listen for message edits
-    const handleMessageEdited = (data: { chatId: number; message: Message }) => {
-      if (data.chatId === chat.id) {
+    const handleMessageEdited = (data: { chatId: number | string; message: Message }) => {
+      if (Number(data.chatId) === Number(chat.id)) {
         setMessages(prev => prev.map(msg => msg.id === data.message.id ? data.message : msg));
       }
     };
 
     // Listen for message deletions
-    const handleMessageDeleted = (data: { chatId: number; messageId: number }) => {
-      if (data.chatId === chat.id) {
+    const handleMessageDeleted = (data: { chatId: number | string; messageId: number }) => {
+      if (Number(data.chatId) === Number(chat.id)) {
         setMessages(prev => prev.filter(msg => msg.id !== data.messageId));
       }
     };

@@ -1676,7 +1676,7 @@ app.post('/chats', authenticateToken, async (req, res) => {
     );
 
     // Notify all members via Socket.IO
-    io.emit('chat_created', { chatId, chat: chats[0] });
+    io.emit('chat_created', { chatId: parseInt(chatId), chat: chats[0] });
 
     res.status(201).json(chats[0]);
   } catch (error) {
@@ -1714,7 +1714,7 @@ app.put('/chats/:id', authenticateToken, async (req, res) => {
     const [chats] = await db.query('SELECT * FROM chats WHERE id = ?', [chatId]);
 
     // Notify all members via Socket.IO
-    io.emit('chat_updated', { chatId, chat: chats[0] });
+    io.emit('chat_updated', { chatId: parseInt(chatId), chat: chats[0] });
 
     res.json(chats[0]);
   } catch (error) {
@@ -1741,7 +1741,7 @@ app.delete('/chats/:id', authenticateToken, async (req, res) => {
     await db.query('DELETE FROM chats WHERE id = ?', [chatId]);
 
     // Notify all members via Socket.IO
-    io.emit('chat_deleted', { chatId });
+    io.emit('chat_deleted', { chatId: parseInt(chatId) });
 
     res.json({ message: 'Chat deleted successfully' });
   } catch (error) {
@@ -1813,7 +1813,7 @@ app.post('/chats/:id/members', authenticateToken, async (req, res) => {
     );
 
     // Notify all members via Socket.IO
-    io.emit('member_added', { chatId, user: users[0] });
+    io.emit('member_added', { chatId: parseInt(chatId), user: users[0] });
 
     res.json({ message: 'Member added successfully', user: users[0] });
   } catch (error) {
@@ -1845,7 +1845,7 @@ app.delete('/chats/:id/members/:userId', authenticateToken, async (req, res) => 
     );
 
     // Notify all members via Socket.IO
-    io.emit('member_removed', { chatId, userId: userIdToRemove });
+    io.emit('member_removed', { chatId: parseInt(chatId), userId: userIdToRemove });
 
     res.json({ message: 'Member removed successfully' });
   } catch (error) {
@@ -1927,7 +1927,8 @@ app.post('/chats/:id/messages', authenticateToken, upload.array('images', 10), a
     `, [result.insertId]);
 
     // Emit to all clients via Socket.IO
-    io.emit('new_message', { chatId, message: messages[0] });
+    console.log('[Socket.IO] Emitting new_message:', { chatId: parseInt(chatId), messageId: messages[0].id });
+    io.emit('new_message', { chatId: parseInt(chatId), message: messages[0] });
 
     res.status(201).json(messages[0]);
   } catch (error) {
@@ -1971,7 +1972,7 @@ app.put('/chats/:chatId/messages/:messageId', authenticateToken, async (req, res
     `, [messageId]);
 
     // Emit to all clients via Socket.IO
-    io.emit('message_edited', { chatId, message: updatedMessages[0] });
+    io.emit('message_edited', { chatId: parseInt(chatId), message: updatedMessages[0] });
 
     res.json(updatedMessages[0]);
   } catch (error) {
@@ -1999,7 +2000,7 @@ app.delete('/chats/:chatId/messages/:messageId', authenticateToken, async (req, 
     await db.query('DELETE FROM messages WHERE id = ?', [messageId]);
 
     // Emit to all clients via Socket.IO
-    io.emit('message_deleted', { chatId, messageId: parseInt(messageId) });
+    io.emit('message_deleted', { chatId: parseInt(chatId), messageId: parseInt(messageId) });
 
     res.json({ success: true });
   } catch (error) {
