@@ -636,6 +636,135 @@ app.post('/users/:id/reject', authenticateToken, async (req, res) => {
   }
 });
 
+// ================================================
+// USER MANAGEMENT ENDPOINTS (Admin only)
+// ================================================
+
+// Get all users (Admin only, including all fields)
+app.get('/admin/users', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+    if (currentUser.length === 0 || currentUser[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const [users] = await db.query(
+      'SELECT id, name, email, role, stars, avatar_url, is_approved, created_at FROM users ORDER BY created_at DESC'
+    );
+
+    res.json(users);
+  } catch (error) {
+    console.error('[Admin Get Users] Error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Update user (Admin only)
+app.put('/admin/users/:id', authenticateToken, upload.single('avatar'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role, is_approved } = req.body;
+
+    // Check if user is admin
+    const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+    if (currentUser.length === 0 || currentUser[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Check if target user exists
+    const [targetUser] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+    if (targetUser.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prepare update fields
+    const updates = [];
+    const values = [];
+
+    if (name !== undefined) {
+      updates.push('name = ?');
+      values.push(name);
+    }
+
+    if (email !== undefined) {
+      updates.push('email = ?');
+      values.push(email);
+    }
+
+    if (role !== undefined) {
+      updates.push('role = ?');
+      values.push(role);
+    }
+
+    if (is_approved !== undefined) {
+      updates.push('is_approved = ?');
+      values.push(is_approved === 'true' || is_approved === true ? 1 : 0);
+    }
+
+    // Handle avatar upload
+    if (req.file) {
+      const avatarPath = `/uploads/${req.file.filename}`;
+      updates.push('avatar_url = ?');
+      values.push(avatarPath);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    values.push(id);
+
+    await db.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    // Get updated user
+    const [updatedUser] = await db.query(
+      'SELECT id, name, email, role, stars, avatar_url, is_approved, created_at FROM users WHERE id = ?',
+      [id]
+    );
+
+    res.json({ message: 'User updated successfully', user: updatedUser[0] });
+  } catch (error) {
+    console.error('[Admin Update User] Error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Delete user (Admin only)
+app.delete('/admin/users/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user is admin
+    const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+    if (currentUser.length === 0 || currentUser[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Prevent admin from deleting themselves
+    if (parseInt(id) === req.user.id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    // Check if target user exists
+    const [targetUser] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+    if (targetUser.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete user (CASCADE will handle related records)
+    await db.query('DELETE FROM users WHERE id = ?', [id]);
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('[Admin Delete User] Error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
 // Get notifications for current user
 app.get('/notifications', authenticateToken, async (req, res) => {
   try {
