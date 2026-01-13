@@ -66,10 +66,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRegister, onOpenLogin, cur
       }
     };
 
+    const handleStarsUpdated = (data: { userId: number; stars: number }) => {
+      if (Number(data.userId) === Number(currentUser.id)) {
+        // Update user's stars immediately without refetching
+        onUserUpdated({ ...currentUser, stars: data.stars });
+      }
+    };
+
     socket.on('task:completed', handleTaskCompleted);
+    socket.on('user:stars_updated', handleStarsUpdated);
 
     return () => {
       socket.off('task:completed', handleTaskCompleted);
+      socket.off('user:stars_updated', handleStarsUpdated);
     };
   }, [socket, currentUser, onUserUpdated]);
 

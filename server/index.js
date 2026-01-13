@@ -806,8 +806,9 @@ app.post('/admin/users/:id/add-stars', authenticateToken, async (req, res) => {
       JSON.stringify({ starsAdded: starsToAdd, newTotal: updatedUser[0].stars })
     );
 
-    // Emit Socket.IO event to update leaderboard
-    io.emit('leaderboard:update');
+    // Emit Socket.IO events to update UI
+    io.emit('leaderboard:update'); // Update leaderboard for everyone
+    io.emit('user:stars_updated', { userId: parseInt(id), stars: updatedUser[0].stars }); // Update user's header
 
     res.json({ 
       message: 'Stars added successfully', 
