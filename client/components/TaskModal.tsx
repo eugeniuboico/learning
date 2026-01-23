@@ -599,7 +599,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                           id="file-upload"
                           className="hidden"
                           onChange={handleAddFiles}
-                          accept=".pdf,.doc,.docx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif"
+                          accept=".pdf,.doc,.docx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif,.html,.htm,.css,.js"
                           multiple
                         />
                         <label

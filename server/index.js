@@ -175,15 +175,15 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    // Allow documents, images, PDFs
-    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|zip|rar/;
+    // Allow documents, images, PDFs, and web files (HTML, CSS, JS)
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|zip|rar|html|htm|css|js/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
 
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only documents, images, and PDFs are allowed.'));
+      cb(new Error('Invalid file type. Allowed: documents, images, PDFs, HTML, CSS, JS.'));
     }
   }
 });
