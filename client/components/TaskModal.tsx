@@ -69,6 +69,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectComment, setRejectComment] = useState('');
+  const [rejectingStudentId, setRejectingStudentId] = useState<number | null>(null);
 
   // Dialog hooks
   const {
@@ -443,6 +446,52 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       console.error('Failed to approve all:', err);
       showAlert('Error', 'Failed to approve submissions', 'danger');
     }
+  };
+
+  const handleRejectClick = (studentId: number) => {
+    setRejectingStudentId(studentId);
+    setRejectComment('');
+    setShowRejectDialog(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectingStudentId || !rejectComment.trim()) {
+      showAlert('Error', 'Please provide a reason for rejection', 'danger');
+      return;
+    }
+
+    try {
+      const res = await fetch(apiUrl(`/tasks/${task.id}/reject-all`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          studentId: rejectingStudentId,
+          comment: rejectComment.trim()
+        })
+      });
+
+      if (res.ok) {
+        fetchSubmissions();
+        if (onUpdate) onUpdate();
+        setShowRejectDialog(false);
+        setRejectComment('');
+        setRejectingStudentId(null);
+        showAlert('Success', 'Submissions rejected. Student has been notified.', 'success');
+      } else {
+        const data = await res.json();
+        showAlert('Error', data.error || 'Failed to reject submissions', 'danger');
+      }
+    } catch (err) {
+      console.error('Failed to reject submissions:', err);
+      showAlert('Error', 'Failed to reject submissions', 'danger');
+    }
+  };
+
+  const handleRejectCancel = () => {
+    setShowRejectDialog(false);
+    setRejectComment('');
+    setRejectingStudentId(null);
   };
 
   const handleDeleteSubmission = async (id: number) => {
@@ -852,7 +901,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                         ))}
                     </div>
 
-                    {/* Approve All Button at Bottom */}
+                    {/* Approve All & Reject Buttons at Bottom */}
                     {(() => {
                       const studentSubmissions = submissions.filter(s => s.user_email === selectedStudent);
                       const hasPending = studentSubmissions.some(s => !s.status || s.status === 'pending');
@@ -860,17 +909,26 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
                       if (studentId && hasPending) {
                         return (
-                          <button
-                            onClick={() => handleApproveAll(studentId)}
-                            className="w-full mt-6 py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center space-x-2 font-bold text-lg"
-                          >
-                            <span className="material-icons">task_alt</span>
-                            <span>
-                              {task.type === 'mandatory'
-                                ? 'Approve Task & Unlock Next Steps'
-                                : 'Approve Task & Grant XP'}
-                            </span>
-                          </button>
+                          <div className="mt-6 space-y-3">
+                            <button
+                              onClick={() => handleApproveAll(studentId)}
+                              className="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center space-x-2 font-bold text-lg"
+                            >
+                              <span className="material-icons">task_alt</span>
+                              <span>
+                                {task.type === 'mandatory'
+                                  ? 'Approve Task & Unlock Next Steps'
+                                  : 'Approve Task & Grant XP'}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => handleRejectClick(studentId)}
+                              className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center space-x-2 font-semibold"
+                            >
+                              <span className="material-icons">cancel</span>
+                              <span>Reject Task</span>
+                            </button>
+                          </div>
                         );
                       }
                       return null;
@@ -1019,6 +1077,46 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-semibold"
               >
                 Discard Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Task Dialog */}
+      {showRejectDialog && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-[600px] p-8">
+            <div className="flex items-center mb-4">
+              <span className="material-icons text-red-500 text-4xl mr-3">cancel</span>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Reject Task</h3>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-300 mb-4 text-lg">
+              Please provide a reason for rejecting this task. The student will receive your comment via email and in-app notification.
+            </p>
+
+            <textarea
+              value={rejectComment}
+              onChange={(e) => setRejectComment(e.target.value)}
+              placeholder="Explain why the submission was rejected and what needs to be improved..."
+              className="w-full h-32 p-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none mb-6"
+              autoFocus
+            />
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleRejectCancel}
+                className="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg transition-colors font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectConfirm}
+                disabled={!rejectComment.trim()}
+                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reject & Notify Student
               </button>
             </div>
           </div>

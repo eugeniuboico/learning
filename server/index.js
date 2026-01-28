@@ -173,7 +173,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
   fileFilter: (req, file, cb) => {
     // Allow documents, images, PDFs, and web files (HTML, CSS, JS)
     const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|zip|rar|html|htm|css|js/;
@@ -1783,6 +1783,72 @@ app.post('/tasks/:taskId/approve-all', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('[Approve All] Error:', err);
     res.status(500).json({ error: 'Failed to approve submissions' });
+  }
+});
+
+// Reject all submissions for a task (Admin only)
+app.post('/tasks/:taskId/reject-all', authenticateToken, async (req, res) => {
+  const { taskId } = req.params;
+  const { studentId, comment } = req.body;
+
+  if (!studentId) return res.status(400).json({ error: 'Student ID required' });
+  if (!comment || !comment.trim()) return res.status(400).json({ error: 'Rejection comment required' });
+
+  try {
+    // Check if user is admin
+    const [userRows] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+    if (userRows.length === 0 || userRows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Get task info first
+    const [taskRows] = await db.query('SELECT title FROM tasks WHERE id = ?', [taskId]);
+    if (taskRows.length === 0) return res.status(404).json({ error: 'Task not found' });
+
+    const taskTitle = taskRows[0].title;
+
+    // Update all submissions for this user and task to rejected
+    await db.query(
+      "UPDATE task_submissions SET status = 'rejected' WHERE task_id = ? AND user_id = ?",
+      [taskId, studentId]
+    );
+
+    // Notify the user with the rejection comment
+    await createNotification(
+      studentId,
+      'submission_rejected',
+      'Task Rejected ❌',
+      `Your submissions for "${taskTitle}" were rejected. Reason: ${comment.trim()}`,
+      null,
+      { taskId, comment: comment.trim() }
+    );
+
+    // Send Email with detailed rejection reason
+    const [student] = await db.query('SELECT email, name FROM users WHERE id = ?', [studentId]);
+    if (student.length > 0) {
+      await sendNotificationEmail(
+        student[0].email,
+        'Task Rejected ❌',
+        `Hello <strong>${student[0].name}</strong>!<br><br>
+            Your submissions for task <strong>"${taskTitle}"</strong> have been reviewed and rejected by an administrator.<br><br>
+            <strong>Reason:</strong><br>
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #ef4444;">
+              ${comment.trim().replace(/\n/g, '<br>')}
+            </div><br>
+            Please review the feedback and resubmit your work when ready.`
+      );
+    }
+
+    // Emit Socket.IO event for live updates
+    io.emit('task:rejected', {
+      userId: parseInt(studentId),
+      taskId: parseInt(taskId)
+    });
+
+    res.json({ message: 'All submissions rejected successfully' });
+  } catch (err) {
+    console.error('[Reject All] Error:', err);
+    res.status(500).json({ error: 'Failed to reject submissions' });
   }
 });
 
