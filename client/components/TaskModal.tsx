@@ -518,6 +518,32 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     return new Date(dateString).toLocaleString();
   };
 
+  const renderStatusChip = (status: Submission['status']) => {
+    const normalized = status ?? 'pending';
+
+    if (normalized === 'approved') {
+      return (
+        <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-bold border border-green-200 dark:border-green-800">
+          Approved
+        </span>
+      );
+    }
+
+    if (normalized === 'rejected') {
+      return (
+        <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded text-xs font-bold border border-red-200 dark:border-red-800">
+          Rejected
+        </span>
+      );
+    }
+
+    return (
+      <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded text-xs font-bold border border-yellow-200 dark:border-yellow-800">
+        Pending
+      </span>
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -696,6 +722,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                                     <div className="flex items-center space-x-2 mb-2">
                                       <span className="material-icons text-green-500 text-sm">check_circle</span>
                                       <span className="font-bold text-gray-800 dark:text-white">Submitted</span>
+                                      {renderStatusChip(sub.status)}
                                     </div>
                                     <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                                       <span className="flex items-center space-x-1">
@@ -878,11 +905,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                                   <span>{formatDate(sub.submitted_at)}</span>
 
                                   {/* Status Chip */}
-                                  {sub.status === 'approved' ? (
-                                    <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-bold border border-green-200 dark:border-green-800">Approved</span>
-                                  ) : (
-                                    <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded text-xs font-bold border border-yellow-200 dark:border-yellow-800">Pending</span>
-                                  )}
+                                  {renderStatusChip(sub.status)}
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
