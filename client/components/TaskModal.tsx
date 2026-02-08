@@ -385,36 +385,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   };
 
-  const downloadFile = async (filename: string) => {
-    try {
-      const res = await fetch(apiUrl(`/submissions/${filename}`), {
-        credentials: 'include'
-      });
-
-      if (!res.ok) throw new Error('Download failed');
-
-      // Extract the filename from Content-Disposition header
-      const disposition = res.headers.get('Content-Disposition');
-      let downloadName = filename;
-      if (disposition) {
-        const match = disposition.match(/filename="?(.+?)"?$/);
-        if (match) downloadName = match[1];
-      }
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = downloadName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Download error:', err);
-      // Fallback: open in new tab
-      window.open(apiUrl(`/submissions/${filename}`), '_blank');
-    }
+  const downloadFile = (submissionId: number) => {
+    window.open(apiUrl(`/submissions/download/${submissionId}`), '_blank');
   };
 
   const formatFileSize = (bytes: number) => {
@@ -773,7 +745,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                                         </button>
                                       )}
                                     <button
-                                      onClick={() => downloadFile(sub.file_path)}
+                                      onClick={() => downloadFile(sub.id)}
                                       className="px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg transition-colors flex items-center space-x-1"
                                     >
                                       <span className="material-icons text-sm">download</span>
@@ -940,7 +912,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                                 {/* Approve Button Removed - Using Approve All instead */}
 
                                 <button
-                                  onClick={() => downloadFile(sub.file_path)}
+                                  onClick={() => downloadFile(sub.id)}
                                   className="px-3 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors flex items-center space-x-2"
                                 >
                                   <span className="material-icons text-sm">download</span>
