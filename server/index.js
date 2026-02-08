@@ -354,10 +354,11 @@ app.post('/verify-code', async (req, res) => {
     );
 
     // Setare Cookie HTTP-Only
+    const isProduction = NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, // process.env.NODE_ENV === 'production', (False for localhost dev)
-      sameSite: 'lax', // Relaxed for localhost dev
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 
