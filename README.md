@@ -1,4 +1,4 @@
-# 🎓 Antigravity Learning Platform
+# 🎓 VibeCoded Learning Platform
 
 Platformă modernă de învățare cu gamification, sistem de puncte, chat în timp real și management de task-uri.
 
