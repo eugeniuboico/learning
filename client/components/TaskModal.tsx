@@ -385,8 +385,36 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   };
 
-  const downloadFile = (filename: string) => {
-    window.open(apiUrl(`/submissions/${filename}`), '_blank');
+  const downloadFile = async (filename: string) => {
+    try {
+      const res = await fetch(apiUrl(`/submissions/${filename}`), {
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error('Download failed');
+
+      // Extract the filename from Content-Disposition header
+      const disposition = res.headers.get('Content-Disposition');
+      let downloadName = filename;
+      if (disposition) {
+        const match = disposition.match(/filename="?(.+?)"?$/);
+        if (match) downloadName = match[1];
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = downloadName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      // Fallback: open in new tab
+      window.open(apiUrl(`/submissions/${filename}`), '_blank');
+    }
   };
 
   const formatFileSize = (bytes: number) => {
