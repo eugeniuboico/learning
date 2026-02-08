@@ -3,6 +3,10 @@ import { Path } from '../types';
 import { useSocket } from '../contexts/SocketContext';
 import { TaskModal } from './TaskModal';
 import { apiUrl } from '../config';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
 
 interface Task {
   id: number;
@@ -52,6 +56,97 @@ export const PathDetails: React.FC<PathDetailsProps> = ({ path, onBack, currentU
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ open: boolean, lessonId: number | null }>({ open: false, lessonId: null });
   const [viewTaskModal, setViewTaskModal] = useState<{ open: boolean, task: Task | null }>({ open: false, task: null });
   const [taskType, setTaskType] = useState<'mandatory' | 'optional'>('mandatory');
+
+  // Lesson editor state (rich summary)
+  const [editLessonData, setEditLessonData] = useState<{ title: string; description: string }>({ title: '', description: '' });
+
+  const isProbablyHtml = (value: string) => /<\s*[a-z][\s\S]*>/i.test(value);
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+  const normalizeLessonDescriptionToHtml = (value: string) => {
+    const v = (value || '').trim();
+    if (!v) return '';
+    if (isProbablyHtml(v)) return v;
+    return `<p>${escapeHtml(v).replace(/\n/g, '<br>')}</p>`;
+  };
+
+  // Initialize TipTap editor for lesson summary (same style as task editor)
+  const lessonEditor = useEditor({
+    extensions: [
+      StarterKit,
+      Image.configure({
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded-lg my-4',
+        },
+      }),
+      Link.configure({
+        openOnClick: false,
+      }),
+    ],
+    content: editLessonData.description || '',
+    editable: editLessonModal.open,
+    onUpdate: ({ editor }) => {
+      setEditLessonData((prev) => ({ ...prev, description: editor.getHTML() }));
+    },
+  });
+
+  // Sync editor content when opening edit modal / switching lesson
+  useEffect(() => {
+    if (!editLessonModal.open || !editLessonModal.lesson) return;
+    const next = {
+      title: editLessonModal.lesson.title,
+      description: normalizeLessonDescriptionToHtml(editLessonModal.lesson.description || ''),
+    };
+    setEditLessonData(next);
+    if (lessonEditor) {
+      lessonEditor.commands.setContent(next.description || '');
+      lessonEditor.setEditable(true);
+    }
+  }, [editLessonModal.open, editLessonModal.lesson, lessonEditor]);
+
+  useEffect(() => {
+    if (lessonEditor) {
+      lessonEditor.setEditable(!!editLessonModal.open);
+    }
+  }, [editLessonModal.open, lessonEditor]);
+
+  // Handle image upload for lesson editor
+  const addLessonImage = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (file && lessonEditor) {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+          const response = await fetch(apiUrl('/upload-image'), {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            lessonEditor.chain().focus().setImage({ src: data.url }).run();
+          } else {
+            console.error('Failed to upload image');
+          }
+        } catch (error) {
+          console.error('Image upload error:', error);
+        }
+      }
+    };
+    input.click();
+  };
 
   // Fetch Lessons
   const fetchLessons = async () => {
@@ -719,9 +814,16 @@ export const PathDetails: React.FC<PathDetailsProps> = ({ path, onBack, currentU
               {viewLessonModal.lesson.description && (
                 <div class="mb-8">
                   <h4 class="text-sm font-bold text-gray-500 mb-3">LESSON SUMMARY</h4>
-                  <p class="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap text-lg">
-                    {viewLessonModal.lesson.description}
-                  </p>
+                  {isProbablyHtml(viewLessonModal.lesson.description) ? (
+                    <div
+                      class="prose dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-900 p-4 rounded-lg"
+                      dangerouslySetInnerHTML={{ __html: viewLessonModal.lesson.description }}
+                    />
+                  ) : (
+                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap text-lg">
+                      {viewLessonModal.lesson.description}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -782,26 +884,102 @@ export const PathDetails: React.FC<PathDetailsProps> = ({ path, onBack, currentU
       {/* Edit Lesson Modal */}
       {editLessonModal.open && editLessonModal.lesson && (
         <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl w-96">
-            <h3 class="text-xl font-bold mb-4">Edit Lesson</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target as any;
-              handleEditLesson(form.title.value, form.description.value);
-            }}>
-              <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Lesson Title</label>
-                <input name="title" defaultValue={editLessonModal.lesson.title} class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none" required autoFocus />
-              </div>
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-[1100px] max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 class="text-2xl font-bold text-gray-800 dark:text-white">Edit Lesson</h3>
+              <button onClick={() => setEditLessonModal({ open: false, lesson: null })} class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <span class="material-icons">close</span>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div class="flex-grow overflow-y-auto p-8 custom-scrollbar">
               <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Lesson Title</label>
+                <input
+                  value={editLessonData.title}
+                  onChange={(e) => setEditLessonData((prev) => ({ ...prev, title: e.target.value }))}
+                  class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Lesson Summary</label>
-                <textarea name="description" defaultValue={editLessonModal.lesson.description} rows={4} class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none resize-none"></textarea>
+                {lessonEditor && (
+                  <div class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600">
+                    {/* Toolbar */}
+                    <div class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex flex-wrap gap-1">
+                      <button
+                        onClick={() => lessonEditor.chain().focus().toggleBold().run()}
+                        class={`px-3 py-1 rounded ${lessonEditor.isActive('bold') ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                        type="button"
+                      >
+                        <strong>B</strong>
+                      </button>
+                      <button
+                        onClick={() => lessonEditor.chain().focus().toggleItalic().run()}
+                        class={`px-3 py-1 rounded ${lessonEditor.isActive('italic') ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                        type="button"
+                      >
+                        <em>I</em>
+                      </button>
+                      <button
+                        onClick={() => lessonEditor.chain().focus().toggleHeading({ level: 2 }).run()}
+                        class={`px-3 py-1 rounded ${lessonEditor.isActive('heading', { level: 2 }) ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                        type="button"
+                      >
+                        H2
+                      </button>
+                      <button
+                        onClick={() => lessonEditor.chain().focus().toggleBulletList().run()}
+                        class={`px-3 py-1 rounded ${lessonEditor.isActive('bulletList') ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                        type="button"
+                      >
+                        • List
+                      </button>
+                      <button
+                        onClick={() => lessonEditor.chain().focus().toggleOrderedList().run()}
+                        class={`px-3 py-1 rounded ${lessonEditor.isActive('orderedList') ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                        type="button"
+                      >
+                        1. List
+                      </button>
+                      <button
+                        onClick={addLessonImage}
+                        class="px-3 py-1 rounded bg-green-500 hover:bg-green-600 text-white flex items-center gap-1"
+                        type="button"
+                      >
+                        <span class="material-icons text-sm">image</span>
+                        Image
+                      </button>
+                    </div>
+
+                    {/* Editor Content */}
+                    <EditorContent
+                      editor={lessonEditor}
+                      className="prose dark:prose-invert max-w-none p-4 min-h-[260px] focus:outline-none"
+                    />
+                  </div>
+                )}
               </div>
-              <div class="flex justify-end space-x-3">
-                <button type="button" onClick={() => setEditLessonModal({ open: false, lesson: null })} class="px-5 py-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all">Save Changes</button>
-              </div>
-            </form>
+            </div>
+
+            {/* Footer */}
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3 bg-white dark:bg-gray-800">
+              <button type="button" onClick={() => setEditLessonModal({ open: false, lesson: null })} class="px-6 py-2.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEditLesson(editLessonData.title, editLessonData.description)}
+                class="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all"
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       )}

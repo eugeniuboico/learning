@@ -1556,7 +1556,7 @@ app.get('/tasks/:id/submissions', authenticateToken, async (req, res) => {
 });
 
 // Download Submission File
-app.get('/submissions/:filename', (req, res) => {
+app.get('/submissions/:filename', async (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(uploadsDir, filename);
 
@@ -1564,7 +1564,30 @@ app.get('/submissions/:filename', (req, res) => {
     return res.status(404).json({ error: 'File not found' });
   }
 
-  res.download(filePath);
+  try {
+    // Look up the submission to get student name and original file name
+    const [rows] = await db.query(
+      `SELECT s.file_name, u.name as user_name 
+       FROM task_submissions s 
+       JOIN users u ON s.user_id = u.id 
+       WHERE s.file_path = ?`,
+      [filename]
+    );
+
+    if (rows.length > 0) {
+      const studentName = rows[0].user_name.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
+      const originalName = rows[0].file_name;
+      const downloadName = `${studentName}-${originalName}`;
+      return res.download(filePath, downloadName);
+    }
+
+    // Fallback: if not found in DB, just download with disk filename
+    res.download(filePath);
+  } catch (err) {
+    console.error('[Download] Error looking up submission:', err);
+    // Fallback: download with disk filename
+    res.download(filePath);
+  }
 });
 
 // Delete Submission
