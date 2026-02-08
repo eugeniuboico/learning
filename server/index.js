@@ -1578,6 +1578,7 @@ app.get('/submissions/:filename', async (req, res) => {
       const studentName = rows[0].user_name.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
       const originalName = rows[0].file_name;
       const downloadName = `${studentName}-${originalName}`;
+      res.set('Access-Control-Expose-Headers', 'Content-Disposition');
       return res.download(filePath, downloadName);
     }
 
